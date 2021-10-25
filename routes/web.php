@@ -1,6 +1,8 @@
 <?php
 
 use App\Events\OrderStatusUpdated;
+use App\Events\TaskCreated;
+use App\Models\Task;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,10 +16,31 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+class Order
+{
+    public $id;
+
+    public function __construct($id)
+    {
+        $this->id = $id;
+    }
+}
+
 Route::get('/', function () {
-
-    // Dispatch the event
-    OrderStatusUpdated::dispatch();
-
     return view('welcome');
+});
+
+Route::get('update', function(){
+    // Dispatch the event
+    OrderStatusUpdated::dispatch(new Order(13));
+});
+
+Route::get('/tasks', function(){
+    return Task::all()->pluck('body');
+});
+
+Route::post('tasks', function(){
+    $task = Task::create(request(['body']));
+
+    TaskCreated::dispatch($task);
 });
