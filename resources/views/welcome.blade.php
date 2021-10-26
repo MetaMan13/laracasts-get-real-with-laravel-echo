@@ -38,18 +38,18 @@
                     newTask: null,
                 },
                 created(){
-                    axios
-                        .get('/tasks')
-                        .then((response) => {
-                            this.tasks = response.data
-                        });
+                    // axios
+                    //     .get('/tasks')
+                    //     .then((response) => {
+                    //         this.tasks = response.data
+                    //     });
 
-                    window.Echo.channel('tasks').listen('TaskCreated', e => {
-                        console.log('New task has been created by someone!');
+                    // window.Echo.channel('tasks').listen('TaskCreated', e => {
+                    //     console.log('New task has been created by someone!');
 
-                        this.tasks.push(e.task.body);
-                        console.log(e);
-                    });
+                    //     this.tasks.push(e.task.body);
+                    //     console.log(e);
+                    // });
                 },
                 methods: {
                     addTask(){

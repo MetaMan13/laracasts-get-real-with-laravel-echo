@@ -1,7 +1,7 @@
 <?php
 
-use App\Events\OrderStatusUpdated;
 use App\Events\TaskCreated;
+use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Support\Facades\Route;
 
@@ -16,31 +16,30 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-class Order
-{
-    public $id;
-
-    public function __construct($id)
-    {
-        $this->id = $id;
-    }
-}
-
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('update', function(){
-    // Dispatch the event
-    OrderStatusUpdated::dispatch(new Order(13));
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth'])->name('dashboard');
+
+Route::get('/projects/{project}', function(Project $project){
+    $project->load('tasks');
+
+    return view('projects.show', compact('project'));
 });
 
-Route::get('/tasks', function(){
-    return Task::all()->pluck('body');
+Route::get('/api/projects/{project}', function(Project $project){
+    return $project->tasks->pluck('body');
 });
 
-Route::post('tasks', function(){
-    $task = Task::create(request(['body']));
+Route::post('/api/projects/{project}/tasks', function(Project $project){
+    $task = $project->tasks()->create(['body' => request('body'), 'project_id' => $project->id]);
 
     TaskCreated::dispatch($task);
+
+    return $task->body;
 });
+
+require __DIR__.'/auth.php';

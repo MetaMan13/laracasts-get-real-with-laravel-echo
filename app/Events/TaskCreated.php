@@ -34,6 +34,10 @@ class TaskCreated implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new Channel('tasks');
+        // Example of a public channel
+        // return new Channel('tasks');
+        
+        // Example of a channel with basic authorisaation
+        return new PrivateChannel('tasks.' . $this->task->project_id);
     }
 }
