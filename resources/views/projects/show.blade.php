@@ -20,6 +20,7 @@
                     @auth
                         <div>
                             <p class="text-sm">{{ auth()->user()->name }}</p>
+                            <input id="userId" type="hidden" value="{{ auth()->user() }}"></input>
                         </div>
                         <div>
                             <form action="{{ route('logout') }}">
@@ -49,8 +50,11 @@
                         <p class="font-base text-xl">Create new task</p>
                     </div>
                     <div class="flex flex-col items-center justify-center mt-8">
-                        <input v-model="newTask" type="text" class="border border-gray-200 rounded-md p-2 focus:border-gray-300 focus:ring-transparent">
+                        <input v-model="newTask" @keydown="userStartedTyping" type="text" class="border border-gray-200 rounded-md p-2 focus:border-gray-300 focus:ring-transparent">
                         <button @click="createTask" class="text-base mt-4 bg-green-500 hover:bg-green-600 hover:font-semibold px-14 py-2 text-white rounded-md">Create task</button>
+                    </div>
+                    <div class="mt-2">
+                        <p v-if="userTyping != null" v-text="userTyping + ' is typing...'" class="animate-pulse text-sm"></p>
                     </div>
                 </div>
                 <div class="w-1/2 mt-6">
@@ -72,6 +76,9 @@
                     tasks: [],
                     newTask: null,
                     projectId: null,
+                    user: Object,
+                    userTyping: null,
+                    typingTimer: false,
                 }
             },
             created(){
@@ -84,6 +91,7 @@
                         this.tasks = response.data
                     })
                 
+                this.user = JSON.parse(document.getElementById('userId').value)
                 // Listen on a public channel
                 // window.Echo.channel('tasks' + this.projectId).listen('TaskCreated', e => {
                 //         console.log(e);
@@ -91,10 +99,25 @@
                 //     });
 
                 // Listen on a private channel
-                window.Echo.private('tasks.' + this.projectId).listen('TaskCreated', e => {
+                window.Echo
+                .private('tasks.' + this.projectId).listen('TaskCreated', e => {
                         console.log(e);
+                        this.typingTimer = false
+                        this.userTyping = null
                         this.tasks.push(e.task.body);
-                    });
+                        window.scrollTo({ left: 0, top: document.body.scrollHeight, behavior: "smooth" });
+                    })
+                // Listen for client side events in this case a whisper
+                .listenForWhisper('userTyping', e => {
+                    this.userTyping = e.userName
+
+                    if(this.typingTimer) clearTimeout(this.typingTimer)
+
+                    this.typingTimer = setTimeout(() => {
+                        this.userTyping = null
+                    }, 3000);
+                })
+
             },
             methods: {
                 createTask(){
@@ -103,7 +126,12 @@
                             this.tasks.push(response.data)
                             this.newTask = null
                         })
-                }
+                },
+                userStartedTyping(){
+                    window.Echo.private('tasks.' + this.projectId).whisper('userTyping', {
+                        userName: this.user.name
+                    })
+                },
             }
         })
     </script>
