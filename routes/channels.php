@@ -15,5 +15,12 @@ use Illuminate\Support\Facades\Broadcast;
 */
 
 Broadcast::channel('tasks.{project}', function ($user, Project $project) {
-    return $project->participants->contains($user);
+    // Code below works well for private channels
+    // return $project->participants->contains($user);
+
+    // Presence channels implementation
+    if($project->participants->contains($user))
+    {
+        return ['name' => $user->name];
+    }
 });

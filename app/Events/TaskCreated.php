@@ -38,6 +38,9 @@ class TaskCreated implements ShouldBroadcast
         // return new Channel('tasks');
         
         // Example of a channel with basic authorisaation
-        return new PrivateChannel('tasks.' . $this->task->project_id);
+        // return new PrivateChannel('tasks.' . $this->task->project_id);
+
+        // Example of a pressence channel
+        return new PresenceChannel('tasks.' . $this->task->project_id);
     }
 }

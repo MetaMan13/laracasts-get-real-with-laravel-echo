@@ -40,10 +40,16 @@
                     @endauth
                 </div>
             </div>
-    
+
             <div class="w-full flex flex-col items-center">
                 <div class="text-center py-10 bg-white w-full border-b border-gray-100 shadow-sm">
                     <h3 class="text-2xl">{{ $project->name }} Tasks</h3>
+                </div>
+                <div class="mt-6 flex flex-col w-full">
+                    <div class="text-center text-lg bg-white px-2 py-4 border-b border-t border-gray-100 shadow-sm">Active users:</div>
+                    <div class="grid grid-flow-row grid-cols-6 gap-4 mt-6 px-6">
+                        <p v-for="participant in participants" class="bg-white text-center rounded-md border border-gray-100 shadow-sm text-sm p-2" v-text="participant.name"></p>
+                    </div>
                 </div>
                 <div class="w-1/2 bg-white text-center mt-6 py-4 rounded-md shadow-sm border-b border-gray-100">
                     <div>
@@ -79,6 +85,7 @@
                     user: Object,
                     userTyping: null,
                     typingTimer: false,
+                    participants: [],
                 }
             },
             created(){
@@ -100,13 +107,28 @@
 
                 // Listen on a private channel
                 window.Echo
-                .private('tasks.' + this.projectId).listen('TaskCreated', e => {
+                .join('tasks.' + this.projectId).listen('TaskCreated', e => {
                         console.log(e);
                         this.typingTimer = false
                         this.userTyping = null
                         this.tasks.push(e.task.body);
                         window.scrollTo({ left: 0, top: document.body.scrollHeight, behavior: "smooth" });
                     })
+                .here( users => {
+                    console.log('here method triggered');
+                    console.log(users)
+                    this.participants = users
+                })
+                .joining( user => {
+                    console.log('User joined')
+                    console.log(user)
+                    this.participants.push(user)
+                })
+                .leaving( user => {
+                    console.log('User leaving')
+                    console.log(user)
+                    this.participants.splice(this.participants.indexOf(user), 1);
+                })
                 // Listen for client side events in this case a whisper
                 .listenForWhisper('userTyping', e => {
                     this.userTyping = e.userName
@@ -128,7 +150,7 @@
                         })
                 },
                 userStartedTyping(){
-                    window.Echo.private('tasks.' + this.projectId).whisper('userTyping', {
+                    window.Echo.join('tasks.' + this.projectId).whisper('userTyping', {
                         userName: this.user.name
                     })
                 },
